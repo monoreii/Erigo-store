@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './Login.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   runApp(const reg());
@@ -34,13 +35,16 @@ class _registerState extends State<register> {
 
     bool passwordNotVisible = true;
 
+    final CollectionReference _user =
+        FirebaseFirestore.instance.collection('shopcart');
+
     // Future<void> _regiter() async {
     //   final String username = _usernameController.text;
     //   final String email = _emailController.text;
     //   final String password = _passwordController.text;
     //   final String confirmPassword = _confirmPasswordController.text;
 
-    //   await _shopcart
+    //   await _user
     //       .add({"name": name, "price": 100000, "qty": qty, "size": size});
 
     //   _nameController.text = '';
@@ -79,16 +83,6 @@ class _registerState extends State<register> {
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
               ),
-              SizedBox(
-                height: 20,
-              ),
-              TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
               SizedBox(height: 20.0),
               TextField(
                 controller: _emailController,
@@ -108,12 +102,27 @@ class _registerState extends State<register> {
               ),
               SizedBox(height: 20.0),
               TextField(
-                controller: _confirmPasswordController,
+                controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Confirm Password',
-                  prefixIcon: Icon(Icons.lock),
+                  labelText: 'Nama',
+                  prefixIcon: Icon(Icons.person),
                 ),
-                obscureText: true,
+              ),
+              SizedBox(height: 20.0),
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Alamat',
+                  prefixIcon: Icon(Icons.home),
+                ),
+              ),
+              SizedBox(height: 20.0),
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'No Telepon',
+                  prefixIcon: Icon(Icons.call),
+                ),
               ),
               SizedBox(height: 20.0),
               Container(
