@@ -3,6 +3,8 @@ import './pembayaran.dart';
 import './core/services/cartList.dart' as cartList;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import './core/services/data.dart' as data;
+import './barang.dart';
 
 void main() async {
   runApp(const sc());
@@ -28,39 +30,46 @@ class shopcart extends StatefulWidget {
 }
 
 class _shopcartState extends State<shopcart> {
+  num harga = 0;
   int _counter = cartList.qty;
   int _selectedIndex = 1;
   num total = cartList.hargaAwal;
 
   //firebase
 
-  //increase the value of the counter
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  //reset the counter value to 0-
-  void _decrementCounter() {
-    setState(() {
-      _counter--;
-      if (_counter < 1) {
-        _counter = 1;
-      }
-    });
-  }
-
 // Initial Selected Value
-  String dropdownvalue = 'L';
+  String _selectedSize = 'L';
 
-  // List of items in our dropdown menu
-  var items = [
-    'S',
-    'M',
-    'L',
-    'XL',
-  ];
+  void Csize(DocumentSnapshot? documentSnapshot, int x, String y) {
+    if (documentSnapshot != null) {
+      String email = documentSnapshot['email'];
+      int productID = documentSnapshot['ListShopcart'][x]['productID'];
+      String size = y;
+      int qty = documentSnapshot['ListShopcart'][x]['qty'];
+      String Lsize = documentSnapshot['ListShopcart'][x]['size'];
+      int hargaP = documentSnapshot['ListShopcart'][x]['Harga'];
+      Map<dynamic, dynamic> produk1 = {
+        "productID": productID,
+        "qty": qty,
+        "size": Lsize,
+        "Harga": hargaP
+      };
+      Map<dynamic, dynamic> produk = {
+        "productID": productID,
+        "qty": qty,
+        "size": size,
+        "Harga": hargaP
+      };
+      _shopcart.doc(documentSnapshot!.id).update({
+        'ListShopcart': FieldValue.arrayRemove([produk1]),
+        'email': email
+      });
+      _shopcart.doc(documentSnapshot!.id).update({
+        'ListShopcart': FieldValue.arrayUnion([produk]),
+        'email': email
+      });
+    }
+  }
 
   // text fields' controllers
   final TextEditingController _nameController = TextEditingController();
@@ -70,378 +79,487 @@ class _shopcartState extends State<shopcart> {
   final CollectionReference _shopcart =
       FirebaseFirestore.instance.collection('shopcart');
 
-  void addqty([DocumentSnapshot? documentSnapshot]) {
+  void addqty(DocumentSnapshot? documentSnapshot, int x) {
     if (documentSnapshot != null) {
-      String name = documentSnapshot['name'];
-      String size = documentSnapshot['size'];
-      int qty = documentSnapshot['qty'] + 1;
-      _shopcart
-          .doc(documentSnapshot!.id)
-          .update({"name": name, "price": 100000, "qty": qty, "size": size});
+      String email = documentSnapshot['email'];
+      int productID = documentSnapshot['ListShopcart'][x]['productID'];
+      String size = documentSnapshot['ListShopcart'][x]['size'];
+      int qty = documentSnapshot['ListShopcart'][x]['qty'] + 1;
+      int Lqty = documentSnapshot['ListShopcart'][x]['qty'];
+      int hargaP = documentSnapshot['ListShopcart'][x]['Harga'];
+      Map<dynamic, dynamic> produk1 = {
+        "productID": productID,
+        "qty": Lqty,
+        "size": size,
+        "Harga": hargaP
+      };
+      Map<dynamic, dynamic> produk = {
+        "productID": productID,
+        "qty": qty,
+        "size": size,
+        "Harga": hargaP
+      };
+      _shopcart.doc(documentSnapshot!.id).update({
+        'ListShopcart': FieldValue.arrayRemove([produk1]),
+        'email': email
+      });
+      _shopcart.doc(documentSnapshot!.id).update({
+        'ListShopcart': FieldValue.arrayUnion([produk]),
+        'email': email
+      });
     }
   }
 
-  void minqty([DocumentSnapshot? documentSnapshot]) {
+  void minqty(DocumentSnapshot? documentSnapshot, int x) {
     if (documentSnapshot != null) {
-      String name = documentSnapshot['name'];
-      String size = documentSnapshot['size'];
-      int qty = documentSnapshot['qty'] - 1;
-      if (qty < 1) {
-        qty = 1;
+      String email = documentSnapshot['email'];
+      int productID = documentSnapshot['ListShopcart'][x]['productID'];
+      String size = documentSnapshot['ListShopcart'][x]['size'];
+      int qty = documentSnapshot['ListShopcart'][x]['qty'] - 1;
+      int Lqty = documentSnapshot['ListShopcart'][x]['qty'];
+      int hargaP = documentSnapshot['ListShopcart'][x]['Harga'];
+      if (Lqty > 1) {
+        Map<dynamic, dynamic> produk1 = {
+          "productID": productID,
+          "qty": Lqty,
+          "size": size,
+          "Harga": hargaP
+        };
+        Map<dynamic, dynamic> produk = {
+          "productID": productID,
+          "qty": qty,
+          "size": size,
+          "Harga": hargaP
+        };
+        _shopcart.doc(documentSnapshot!.id).update({
+          'ListShopcart': FieldValue.arrayRemove([produk1]),
+          'email': email
+        });
+        _shopcart.doc(documentSnapshot!.id).update({
+          'ListShopcart': FieldValue.arrayUnion([produk]),
+          'email': email
+        });
       }
-      _shopcart
-          .doc(documentSnapshot!.id)
-          .update({"name": name, "price": 100000, "qty": qty, "size": size});
     }
   }
 
-  Future<void> _create([DocumentSnapshot? documentSnapshot]) async {
-    await showModalBottomSheet(
-        isScrollControlled: true,
-        context: context,
-        builder: (BuildContext ctx) {
-          return Padding(
-            padding: EdgeInsets.only(
-                top: 20,
-                left: 20,
-                right: 20,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: _sizeController,
-                  decoration: const InputDecoration(labelText: 'Size'),
-                ),
-                TextField(
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  controller: _qtyController,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                  ),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                ElevatedButton(
-                  child: const Text('Create'),
-                  onPressed: () async {
-                    final String name = _nameController.text;
-                    final String size = _sizeController.text;
-                    final int? qty = int.tryParse(_qtyController.text);
-                    if (qty != null) {
-                      await _shopcart.add({
-                        "name": name,
-                        "price": 100000,
-                        "qty": qty,
-                        "size": size
-                      });
+  final DTshopcart = FirebaseFirestore.instance
+      .collection('shopcart')
+      .where("email", isEqualTo: data.email)
+      .limit(1)
+      .snapshots();
 
-                      _nameController.text = '';
-                      _qtyController.text = '';
-                      _sizeController.text = '';
-                      Navigator.of(context).pop();
-                    }
-                  },
-                )
-              ],
-            ),
-          );
-        });
-  }
+  void delete(DocumentSnapshot documentSnapshot, int x) {
+    String email = documentSnapshot['email'];
+    int productID = documentSnapshot['ListShopcart'][x]['productID'];
+    String size = documentSnapshot['ListShopcart'][x]['size'];
+    int qty = documentSnapshot['ListShopcart'][x]['qty'];
+    int hargaP = documentSnapshot['ListShopcart'][x]['Harga'];
 
-  Future<void> _update([DocumentSnapshot? documentSnapshot]) async {
-    if (documentSnapshot != null) {
-      _nameController.text = documentSnapshot['name'];
-      _sizeController.text = documentSnapshot['size'];
-      _qtyController.text = documentSnapshot['qty'].toString();
-    }
+    Map<dynamic, dynamic> produk = {
+      "productID": productID,
+      "qty": qty,
+      "size": size,
+      "Harga": hargaP
+    };
 
-    await showModalBottomSheet(
-        isScrollControlled: true,
-        context: context,
-        builder: (BuildContext ctx) {
-          return Padding(
-            padding: EdgeInsets.only(
-                top: 20,
-                left: 20,
-                right: 20,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: _sizeController,
-                  decoration: const InputDecoration(labelText: 'Size'),
-                ),
-                TextField(
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  controller: _qtyController,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                  ),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                ElevatedButton(
-                  child: const Text('Update'),
-                  onPressed: () async {
-                    final String name = _nameController.text;
-                    final String size = _sizeController.text;
-                    final int? qty = int.tryParse(_qtyController.text);
-                    if (qty != null) {
-                      await _shopcart.doc(documentSnapshot!.id).update({
-                        "name": name,
-                        "price": 100000,
-                        "qty": qty,
-                        "size": size
-                      });
-                      _nameController.text = '';
-                      _qtyController.text = '';
-                      _sizeController.text = '';
-                      Navigator.of(context).pop();
-                    }
-                  },
-                )
-              ],
-            ),
-          );
-        });
-  }
-
-  Future<void> _delete(String productId) async {
-    await _shopcart.doc(productId).delete();
-
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('You have successfully deleted a product')));
+    _shopcart.doc(documentSnapshot!.id).update({
+      'ListShopcart': FieldValue.arrayRemove([produk]),
+      'email': email
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFF146C94),
-        title: Text("Shopcart"),
-      ),
-      body: SafeArea(
-          child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            Center(
-              child: Column(
-                children: [
-                  Text('Your Shopcart',
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600)),
-                  Text('$_counter items',
-                      style: TextStyle(
-                          fontSize: 14, color: Colors.black.withOpacity(0.7))),
-                  TextButton(
-                    style: ButtonStyle(
-                      foregroundColor:
-                          MaterialStateProperty.all<Color>(Color(0xFF19A7CE)),
-                    ),
-                    onPressed: () => _create(),
-                    child: Text('Add items'),
-                  )
-                ],
-              ),
-            ),
-            Flexible(
-              child: StreamBuilder(
-                stream: _shopcart.snapshots(),
-                builder:
-                    (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-                  if (streamSnapshot.hasData) {
-                    return ListView.builder(
-                      itemCount: streamSnapshot.data!.docs.length,
-                      itemBuilder: (context, index) {
-                        final DocumentSnapshot documentSnapshot =
-                            streamSnapshot.data!.docs[index];
-                        return Card(
-                            child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          height: 170,
-                          child: Row(children: [
-                            Image(
-                              image: AssetImage('aset/Anorak_Jacket.jpg'),
-                              width: 130,
-                              height: 100,
-                              fit: BoxFit.contain,
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      documentSnapshot['name'],
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
-                                    ),
-                                    Text(
-                                      " ( " + documentSnapshot['size'] + " )",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  "Rp." + documentSnapshot['price'].toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.fromLTRB(8, 5, 0, 0),
-                                  child: Text(
-                                    "Quantity",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15),
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      //minus button
-                                      width: 25,
-                                      height: 25,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                            padding: EdgeInsets.all(5)),
-                                        child: Icon(
-                                          Icons.remove,
-                                          size: 15,
-                                        ),
-                                        onPressed: () => setState(() {
-                                          minqty(documentSnapshot);
-                                        }),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        documentSnapshot['qty'].toString(),
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      //addbutton
-                                      width: 25,
-                                      height: 25,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                            padding: EdgeInsets.all(5)),
-                                        child: Icon(
-                                          Icons.add,
-                                          size: 15,
-                                        ),
-                                        onPressed: () => setState(() {
-                                          addqty(documentSnapshot);
-                                        }),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 5,
-                                      height: 5,
-                                    ),
-                                    IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () =>
-                                            _update(documentSnapshot)),
-                                    SizedBox(
-                                      width: 25,
-                                      height: 25,
-                                      child: ElevatedButton(
-                                        //hapus button
-                                        style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                Color.fromARGB(255, 255, 0, 0),
-                                            padding: EdgeInsets.all(5)),
-                                        child: Icon(
-                                          Icons.delete,
-                                          size: 15,
-                                        ),
-                                        onPressed: () => showDialog<String>(
-                                          context: context,
-                                          builder: (BuildContext context) =>
-                                              AlertDialog(
-                                            title: const Text('Konfirmasi'),
-                                            content: const Text(
-                                                'Apakah anda yakin menghapus item dari keranjang!'),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, 'Cancel'),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => setState(() {
-                                                  _delete(documentSnapshot.id);
-                                                  Navigator.pop(
-                                                      context, 'Hapus');
-                                                }),
-                                                child: const Text('Hapus'),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ]),
-                        ));
-                      },
-                    );
-                  }
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                },
-              ),
-            ),
-          ],
+        appBar: AppBar(
+          backgroundColor: Color(0xFF146C94),
+          title: Text("Shopcart"),
         ),
-      )),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) {
-                return Pembayaran();
-              },
-            ),
-          );
-        },
-        icon: Icon(Icons.shopping_cart_checkout),
-        label: Text("Rp. 100000"),
-        backgroundColor: Color(0xFF146C94),
-      ),
-    );
+        body: SafeArea(
+            child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              Center(
+                child: Column(
+                  children: [
+                    Text('Your Shopcart',
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                    StreamBuilder(
+                        stream: DTshopcart,
+                        builder: (context,
+                            AsyncSnapshot<QuerySnapshot> streamSnapshot) {
+                          if (streamSnapshot.hasData) {
+                            final Titem = streamSnapshot.data!.docs;
+                            return Text(
+                                Titem[0]['ListShopcart'].length.toString() +
+                                    ' items',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black.withOpacity(0.7)));
+                          }
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: StreamBuilder(
+                  stream: DTshopcart,
+                  builder:
+                      (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
+                    if (streamSnapshot.hasData) {
+                      final items = streamSnapshot.data!.docs;
+                      final DocumentSnapshot documentSnapshot =
+                          streamSnapshot.data!.docs[0];
+                      return ListView(
+                          shrinkWrap: true,
+                          physics: BouncingScrollPhysics(),
+                          padding: EdgeInsets.all(16),
+                          children: [
+                            for (int i = 0;
+                                i < items[0]['ListShopcart'].length;
+                                i++) ...[
+                              StreamBuilder(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('produk')
+                                      .where("ProdukID",
+                                          isEqualTo: items[0]['ListShopcart'][i]
+                                              ['productID'])
+                                      .limit(1)
+                                      .snapshots(), //mengambil data produk berdasarkan produk fav (Listwishlist)
+                                  builder: (context,
+                                      AsyncSnapshot<QuerySnapshot>
+                                          streamSnapshot) {
+                                    if (streamSnapshot.hasData) {
+                                      final item = streamSnapshot.data!.docs;
+                                      return Card(
+                                          child: InkWell(
+                                        splashColor: Color(0xFF0E5E6F),
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) {
+                                                data.produk = items[0]
+                                                        ['ListShopcart'][i]
+                                                    ['productID'];
+                                                return barang();
+                                              },
+                                            ),
+                                          );
+                                        },
+                                        child: SizedBox(
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          height: 170,
+                                          child: Row(children: [
+                                            Image(
+                                              image: NetworkImage(
+                                                  item[0]["image"]),
+                                              width: 130,
+                                              height: 100,
+                                              fit: BoxFit.contain,
+                                            ),
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  item[0]['NamaP'],
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 15),
+                                                ),
+                                                Text(
+                                                  "Rp." +
+                                                      item[0]['Harga']
+                                                          .toString(),
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14),
+                                                ),
+                                                DropdownButton<String>(
+                                                  value: items[0]
+                                                          ['ListShopcart'][i][
+                                                      'size'], // Nilai ukuran yang dipilih
+                                                  onChanged:
+                                                      (String? newValue) {
+                                                    setState(() {
+                                                      _selectedSize = newValue!;
+                                                      Csize(documentSnapshot, i,
+                                                          _selectedSize);
+                                                      // Mengubah nilai ukuran yang dipilih
+                                                    });
+                                                  },
+                                                  items: <String>[
+                                                    'S',
+                                                    'M',
+                                                    'L',
+                                                    'XL'
+                                                  ].map((String size) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value: size,
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                              width:
+                                                                  8.0), // Menggeser tulisan ke kanan
+                                                          Text(
+                                                            size,
+                                                            style: TextStyle(
+                                                                fontSize: 16.0,
+                                                                color: Colors
+                                                                    .black),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                  underline:
+                                                      Container(), // Menghilangkan garis bawah dropdown
+                                                  isExpanded:
+                                                      false, // Tidak mengambil ruang penuh pada baris
+                                                  icon: Padding(
+                                                    padding: EdgeInsets.only(
+                                                        right:
+                                                            8.0), // Menggeser ikon ke kanan
+                                                    child: Icon(
+                                                        Icons.arrow_drop_down),
+                                                  ), // Icon dropdown
+                                                  selectedItemBuilder:
+                                                      (BuildContext context) {
+                                                    return <String>[
+                                                      'S',
+                                                      'M',
+                                                      'L',
+                                                      'XL'
+                                                    ].map((String value) {
+                                                      return Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: Text(
+                                                          value,
+                                                          style: TextStyle(
+                                                              fontSize: 16.0),
+                                                        ),
+                                                      );
+                                                    }).toList();
+                                                  },
+                                                  dropdownColor: Colors.white,
+                                                  elevation:
+                                                      2, // Mengatur elevasi dropdown
+                                                  focusColor: Colors.white,
+                                                  autofocus: false,
+                                                  isDense:
+                                                      true, // Mengurangi padding pada dropdown
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.fromLTRB(
+                                                      8, 5, 0, 0),
+                                                  child: Text(
+                                                    "Quantity",
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14),
+                                                  ),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    SizedBox(
+                                                      //minus button
+                                                      width: 25,
+                                                      height: 25,
+                                                      child: ElevatedButton(
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            5)),
+                                                        child: Icon(
+                                                          Icons.remove,
+                                                          size: 15,
+                                                        ),
+                                                        onPressed: () =>
+                                                            setState(() {
+                                                          minqty(
+                                                              documentSnapshot,
+                                                              i);
+                                                        }),
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        items[0]['ListShopcart']
+                                                                [i]['qty']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 15),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      //addbutton
+                                                      width: 25,
+                                                      height: 25,
+                                                      child: ElevatedButton(
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            5)),
+                                                        child: Icon(
+                                                          Icons.add,
+                                                          size: 15,
+                                                        ),
+                                                        onPressed: () =>
+                                                            setState(() {
+                                                          addqty(
+                                                              documentSnapshot,
+                                                              i);
+                                                        }),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                      height: 5,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 25,
+                                                      height: 25,
+                                                      child: ElevatedButton(
+                                                        //hapus button
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                                backgroundColor:
+                                                                    Color
+                                                                        .fromARGB(
+                                                                            255,
+                                                                            255,
+                                                                            0,
+                                                                            0),
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            5)),
+                                                        child: Icon(
+                                                          Icons.delete,
+                                                          size: 15,
+                                                        ),
+                                                        onPressed: () =>
+                                                            showDialog<String>(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                                  context) =>
+                                                              AlertDialog(
+                                                            title: const Text(
+                                                                'Konfirmasi'),
+                                                            content: const Text(
+                                                                'Apakah anda yakin menghapus item dari keranjang!'),
+                                                            actions: <Widget>[
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                        context,
+                                                                        'Cancel'),
+                                                                child: const Text(
+                                                                    'Cancel'),
+                                                              ),
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    setState(
+                                                                        () {
+                                                                  delete(
+                                                                      documentSnapshot,
+                                                                      i);
+                                                                  ScaffoldMessenger.of(
+                                                                          context)
+                                                                      .showSnackBar(const SnackBar(
+                                                                          content:
+                                                                              Text('You have successfully deleted a product')));
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      'Hapus');
+                                                                }),
+                                                                child:
+                                                                    const Text(
+                                                                        'Hapus'),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ]),
+                                        ),
+                                      ));
+                                    }
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  })
+                            ]
+                          ]);
+                    }
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        )),
+        floatingActionButton: StreamBuilder(
+            stream: DTshopcart,
+            builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
+              if (streamSnapshot.hasData) {
+                harga = 0;
+                final items = streamSnapshot.data!.docs;
+                for (int i = 0; i < items[0]['ListShopcart'].length; i++) {
+                  harga += items[0]['ListShopcart'][i]['Harga'] *
+                      items[0]['ListShopcart'][i]['qty'];
+                }
+                ;
+                return FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return Pembayaran();
+                        },
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.shopping_cart_checkout),
+                  label: Text("Rp." + harga.toString()),
+                  backgroundColor: Color(0xFF146C94),
+                );
+              }
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }));
   }
 }

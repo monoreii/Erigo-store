@@ -5,6 +5,7 @@ class AppColor {
   static const Color primarySoft = Color(0xFFEAEAF2);
   static const Color secondary = Color(0xFF0A0E2F);
   static const Color border = Color(0xFFD3D3E4);
+  static const Color accent = Color(0xFFFABA3E);
   static const Color alert = Color.fromARGB(255, 245, 15, 15);
 
 }

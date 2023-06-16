@@ -6,32 +6,31 @@ import './core/services/data.dart' as data;
 import 'dart:math';
 
 void main() async {
-  runApp(const pb());
+  runApp(const pb1());
 }
 
-class pb extends StatelessWidget {
-  const pb({Key? key}) : super(key: key);
+class pb1 extends StatelessWidget {
+  const pb1({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Pembayaran',
-      home: Pembayaran(),
+      title: 'Pembayaran1',
+      home: Pembayaran1(),
     );
   }
 }
 
-class Pembayaran extends StatefulWidget {
-  const Pembayaran({super.key});
+class Pembayaran1 extends StatefulWidget {
+  const Pembayaran1({super.key});
 
   @override
-  State<Pembayaran> createState() => _Pembayaran();
+  State<Pembayaran1> createState() => _Pembayaran1();
 }
 
-class _Pembayaran extends State<Pembayaran> {
+class _Pembayaran1 extends State<Pembayaran1> {
   int kodeResi = 100000 + Random().nextInt(1000000 - 100000);
-  num harga = 0;
   // Initial Selected Value
   String mtdPengiriman = 'Reguler';
   final TextEditingController controlAP = TextEditingController();
@@ -40,7 +39,7 @@ class _Pembayaran extends State<Pembayaran> {
 
   final DTproduk = FirebaseFirestore.instance
       .collection('produk')
-      .where("ProdukID", isEqualTo: 1)
+      .where("ProdukID", isEqualTo: data.produk)
       .limit(1)
       .snapshots();
 
@@ -170,10 +169,8 @@ class _Pembayaran extends State<Pembayaran> {
 
   final CollectionReference _pesanan =
       FirebaseFirestore.instance.collection('pesanan');
-  final CollectionReference _shopcart =
-      FirebaseFirestore.instance.collection('shopcart');
 
-  void plusPesanan(DocumentSnapshot doc) {
+  void plusPesanan(int idProduk, int harga) {
     FirebaseFirestore.instance
         .collection('pesanan')
         .where("email", isEqualTo: data.email)
@@ -181,45 +178,20 @@ class _Pembayaran extends State<Pembayaran> {
         .get()
         .then((querySnapshot) {
       for (var docSnapshot in querySnapshot.docs) {
-        for (int x = 0; x < doc['ListShopcart'].length; x++) {
-          int productID = doc['ListShopcart'][x]['productID'];
-          String size = doc['ListShopcart'][x]['size'];
-          int qty = doc['ListShopcart'][x]['qty'];
-          int hargaP = doc['ListShopcart'][x]['Harga'];
-
-          Map<dynamic, dynamic> produk = {
-            "productID": productID,
-            "qty": qty,
-            "size": size,
-            "Harga": hargaP,
-            "kodeResi": kodeResi
-          };
-          _pesanan.doc(docSnapshot.id).update({
-            "email": docSnapshot.data()['email'],
-            "Lpesanan": FieldValue.arrayUnion([produk])
-          });
-        }
-        ;
-        // FirebaseFirestore.instance
-        //     .collection('shopcart')
-        //     .where("email", isEqualTo: data.email)
-        //     .limit(1)
-        //     .get()
-        //     .then((querySnapshot) {
-        //   for (var docSnapshot in querySnapshot.docs) {
-        //     _shopcart.doc(docSnapshot.id).update(
-        //         {'ListShopcart': [], 'email': docSnapshot.data()['email']});
-        //   }
-        // });
+        Map<dynamic, dynamic> produk = {
+          "productID": idProduk,
+          "qty": 1,
+          "size": 'L',
+          "Harga": harga,
+          "kodeResi": kodeResi
+        };
+        _pesanan.doc(docSnapshot.id).update({
+          "email": docSnapshot.data()['email'],
+          "Lpesanan": FieldValue.arrayUnion([produk])
+        });
       }
     });
   }
-
-  final DTshopcart = FirebaseFirestore.instance
-      .collection('shopcart')
-      .where("email", isEqualTo: data.email)
-      .limit(1)
-      .snapshots();
 
   @override
   Widget build(BuildContext context) {
@@ -232,88 +204,57 @@ class _Pembayaran extends State<Pembayaran> {
             child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: StreamBuilder(
-                    stream: DTshopcart,
+                    stream: DTproduk,
                     builder:
                         (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
                       if (streamSnapshot.hasData) {
-                        final items = streamSnapshot.data!.docs;
+                        final produk = streamSnapshot.data!.docs;
                         return ListView(children: [
-                          for (int i = 0;
-                              i < items[0]['ListShopcart'].length;
-                              i++) ...[
-                            StreamBuilder(
-                                stream: FirebaseFirestore.instance
-                                    .collection('produk')
-                                    .where("ProdukID",
-                                        isEqualTo: items[0]['ListShopcart'][i]
-                                            ['productID'])
-                                    .limit(1)
-                                    .snapshots(), //mengambil data produk berdasarkan produk fav (Listwishlist)
-                                builder: (context,
-                                    AsyncSnapshot<QuerySnapshot>
-                                        streamSnapshot) {
-                                  if (streamSnapshot.hasData) {
-                                    final item = streamSnapshot.data!.docs;
-                                    return Card(
-                                        child: SizedBox(
-                                      width: 150,
-                                      height: 120,
-                                      child: Column(children: [
-                                        Row(children: [
-                                          Image(
-                                            image:
-                                                NetworkImage(item[0]["image"]),
-                                            width: 150,
-                                            height: 100,
-                                            fit: BoxFit.contain,
-                                          ),
-                                          Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                item[0]['NamaP'],
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16),
-                                              ),
-                                              Text(
-                                                "Rp." +
-                                                    item[0]['Harga'].toString(),
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              Text(
-                                                "Size : " +
-                                                    items[0]['ListShopcart'][i]
-                                                        ['size'],
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                              Text(
-                                                "Quantity : " +
-                                                    items[0]['ListShopcart'][i]
-                                                            ['qty']
-                                                        .toString(),
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                            ],
-                                          ),
-                                        ]),
-                                      ]),
-                                    ));
-                                  }
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                })
-                          ],
+                          Card(
+                              child: SizedBox(
+                            width: 150,
+                            height: 120,
+                            child: Column(children: [
+                              Row(children: [
+                                Image(
+                                  image: NetworkImage(produk[0]["image"]),
+                                  width: 150,
+                                  height: 100,
+                                  fit: BoxFit.contain,
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      produk[0]['NamaP'],
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    Text(
+                                      "Rp." + produk[0]['Harga'].toString(),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15),
+                                    ),
+                                    Text(
+                                      "Size : " + data.size,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15),
+                                    ),
+                                    Text(
+                                      "Quantity : 1",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15),
+                                    ),
+                                  ],
+                                ),
+                              ]),
+                            ]),
+                          )),
                           StreamBuilder(
                               stream: DTakun,
                               builder: (context,
@@ -366,7 +307,7 @@ class _Pembayaran extends State<Pembayaran> {
                                           Row(
                                             children: [
                                               Icon(Icons.local_shipping),
-                                              Text(" Jenis pengiriman ",
+                                              Text(" Jenis pengiriman $code",
                                                   style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
@@ -474,21 +415,13 @@ class _Pembayaran extends State<Pembayaran> {
                       );
                     }))),
         floatingActionButton: StreamBuilder(
-            stream: DTshopcart,
+            stream: DTproduk,
             builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
               if (streamSnapshot.hasData) {
-                harga = 0;
-                final items = streamSnapshot.data!.docs;
-                final DocumentSnapshot documentSnapshot =
-                    streamSnapshot.data!.docs[0];
-                for (int i = 0; i < items[0]['ListShopcart'].length; i++) {
-                  harga += items[0]['ListShopcart'][i]['Harga'] *
-                      items[0]['ListShopcart'][i]['qty'];
-                }
-                ;
+                final harga = streamSnapshot.data!.docs;
                 return FloatingActionButton.extended(
                   onPressed: () {
-                    plusPesanan(documentSnapshot);
+                    plusPesanan(harga[0]['ProdukID'], harga[0]['Harga']);
                     showDialog<String>(
                       context: context,
                       builder: (BuildContext context) => AlertDialog(
@@ -515,7 +448,7 @@ class _Pembayaran extends State<Pembayaran> {
                     );
                   },
                   icon: Icon(Icons.payments),
-                  label: Text("Rp." + (harga + biaya).toString()),
+                  label: Text("Rp." + (harga[0]['Harga'] + biaya).toString()),
                   backgroundColor: Color(0xFF146C94),
                 );
               }

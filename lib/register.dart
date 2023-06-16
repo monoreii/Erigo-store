@@ -28,32 +28,79 @@ class register extends StatefulWidget {
 class _registerState extends State<register> {
   @override
   Widget build(BuildContext context) {
-    TextEditingController _usernameController = TextEditingController();
+    TextEditingController _namaController = TextEditingController();
     TextEditingController _emailController = TextEditingController();
     TextEditingController _passwordController = TextEditingController();
-    TextEditingController _confirmPasswordController = TextEditingController();
+    TextEditingController _alamatController = TextEditingController();
+    TextEditingController _kodePosController = TextEditingController();
+    TextEditingController _nTeleponController = TextEditingController();
 
     bool passwordNotVisible = true;
 
     final CollectionReference _user =
+        FirebaseFirestore.instance.collection('akun');
+
+    final CollectionReference _shopcart =
         FirebaseFirestore.instance.collection('shopcart');
 
-    // Future<void> _regiter() async {
-    //   final String username = _usernameController.text;
-    //   final String email = _emailController.text;
-    //   final String password = _passwordController.text;
-    //   final String confirmPassword = _confirmPasswordController.text;
+    final CollectionReference _wishlist =
+        FirebaseFirestore.instance.collection('wishlist');
 
-    //   await _user
-    //       .add({"name": name, "price": 100000, "qty": qty, "size": size});
+    final CollectionReference _pesanan =
+        FirebaseFirestore.instance.collection('pesanan');
 
-    //   _nameController.text = '';
-    //   _qtyController.text = '';
-    //   _sizeController.text = '';
+    Future<void> _regiter() async {
+      final String nama = _namaController.text;
+      final String email = _emailController.text;
+      final String password = _passwordController.text;
+      final String alamat = _alamatController.text;
+      final String nTelepon = _nTeleponController.text;
+      final String kodePos = _kodePosController.text;
 
-    //   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-    //       content: Text('You have successfully deleted a product')));
-    // }
+      bool emailFound = false;
+      FirebaseFirestore.instance
+          .collection('akun')
+          .where("email", isEqualTo: _emailController.text)
+          .limit(1)
+          .get()
+          .then((QuerySnapshot querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          if (doc.get('email') == _emailController.text) {
+            emailFound = true;
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Email sudah terdaftar')));
+          } else {
+            emailFound = false;
+          }
+        });
+        if (emailFound == false) {
+          _user.add({
+            "email": email,
+            "password": password,
+            "nama": nama,
+            "nTelepon": nTelepon,
+            "alamat": alamat,
+            "kodePos": kodePos
+          });
+
+          _wishlist.add({
+            "email": email,
+            "Listwishlist": []
+          }); //untuk menambhakan data ditabel wishlist
+          _shopcart.add({"email": email, "ListShopcart": []});
+          _pesanan.add({"email": email, "Lpesanan": []});
+          _namaController.text = '';
+          _emailController.text = '';
+          _passwordController.text = '';
+          _alamatController.text = '';
+          _nTeleponController.text = '';
+
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Registrasi berhasil')));
+          Navigator.pop(context);
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -102,7 +149,7 @@ class _registerState extends State<register> {
               ),
               SizedBox(height: 20.0),
               TextField(
-                controller: _emailController,
+                controller: _namaController,
                 decoration: InputDecoration(
                   labelText: 'Nama',
                   prefixIcon: Icon(Icons.person),
@@ -110,7 +157,7 @@ class _registerState extends State<register> {
               ),
               SizedBox(height: 20.0),
               TextField(
-                controller: _emailController,
+                controller: _alamatController,
                 decoration: InputDecoration(
                   labelText: 'Alamat',
                   prefixIcon: Icon(Icons.home),
@@ -118,7 +165,19 @@ class _registerState extends State<register> {
               ),
               SizedBox(height: 20.0),
               TextField(
-                controller: _emailController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                controller: _kodePosController,
+                decoration: InputDecoration(
+                  labelText: 'Kode pos',
+                  prefixIcon: Icon(Icons.local_post_office),
+                ),
+              ),
+              SizedBox(height: 20.0),
+              TextField(
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                controller: _nTeleponController,
                 decoration: InputDecoration(
                   labelText: 'No Telepon',
                   prefixIcon: Icon(Icons.call),
@@ -133,7 +192,7 @@ class _registerState extends State<register> {
                     borderRadius: BorderRadius.circular(20)),
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    _regiter();
                   },
                   child: Text(
                     'Sign Up',

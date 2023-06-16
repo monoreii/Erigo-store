@@ -1,0 +1,39 @@
+produk{
+    DetailP string
+    Harga number
+    KategoriID number
+    NamaP string
+    ProdukID number
+    Terjual number
+    image string
+}
+
+akun{
+    alamat string
+    email string
+    nTelepon string
+    nama string
+    password string
+    kodePos string
+}
+
+news{
+    gambar string
+    news string
+    news_id number
+}
+
+pesanan{
+    Lpesanan array
+    email string
+}
+
+Shopcart{
+    ListShopcart array
+    email string
+}
+
+wishlist{
+    Listwishlist array
+    email string
+}

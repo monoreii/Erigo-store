@@ -26,108 +26,72 @@ class helpdesk extends StatefulWidget {
 }
 
 class _helpdeskState extends State<helpdesk> {
-  final CollectionReference _produk =
-      FirebaseFirestore.instance.collection('produk');
-
-  final TextEditingController _produkID = TextEditingController();
-  final TextEditingController _KategoriID = TextEditingController();
-  final TextEditingController _nameP = TextEditingController();
-  final TextEditingController _detailP = TextEditingController();
-  final TextEditingController _harga = TextEditingController();
-  final TextEditingController _terjual = TextEditingController();
+  int daysBetween(DateTime from, DateTime to) {
+    from = DateTime(from.year, from.month, from.day);
+    to = DateTime(to.year, to.month, to.day);
+    return (to.difference(from).inHours / 24).round();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFF146C94),
-        title: Text("helpdesk"),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
+        appBar: AppBar(
+          backgroundColor: Color(0xFF146C94),
+          title: Text("helpdesk"),
+        ),
+        body: SafeArea(
           child: Column(
             children: [
-              TextField(
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                controller: _produkID,
-                decoration: const InputDecoration(labelText: '_produkID'),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(
+                  'Helpdesk',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              SizedBox(
-                height: 10,
+              Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      title: Text('Subject Pesan'),
+                      subtitle: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan Subject Pesan',
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                        height:
+                            16), // Memberikan jarak antara Subject Pesan dan Deskripsi Pesan
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        maxLines: 5, // Mengatur jumlah baris pada TextField
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan Deskripsi Pesan',
+                        ),
+                      ),
+                    ),
+                    ButtonBar(
+                      alignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            // Logika untuk mengirim pesan
+                          },
+                          child: Text('Kirim'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              TextField(
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                controller: _KategoriID,
-                decoration: const InputDecoration(labelText: '_KategoriID'),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              TextField(
-                controller: _nameP,
-                decoration: const InputDecoration(labelText: '_nameP'),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              TextField(
-                controller: _detailP,
-                decoration: const InputDecoration(labelText: '_detailP'),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              TextField(
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                controller: _harga,
-                decoration: const InputDecoration(labelText: '_harga'),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              TextField(
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                controller: _terjual,
-                decoration: const InputDecoration(labelText: '_terjual'),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              ElevatedButton(
-                child: const Text('Create'),
-                onPressed: () async {
-                  final String namap = _nameP.text;
-                  final String detailp = _detailP.text;
-                  final int? kategoriid = int.tryParse(_KategoriID.text);
-                  final int? produkid = int.tryParse(_produkID.text);
-                  final int? terjual = int.tryParse(_terjual.text);
-                  final int? harga = int.tryParse(_harga.text);
-
-                  await _produk.add({
-                    "DetailP": detailp,
-                    "Harga": harga,
-                    "KategoriID": kategoriid,
-                    "NamaP": namap,
-                    "ProdukID": produkid,
-                    "Terjual": terjual,
-                  });
-
-                  _nameP.text = '';
-                  _detailP.text = '';
-                  _KategoriID.text = '';
-                  _produkID.text = '';
-                  _terjual.text = '';
-                  _harga.text = '';
-                },
-              )
             ],
           ),
-        ),
-      ),
-    );
+        ));
   }
 }

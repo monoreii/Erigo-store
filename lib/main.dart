@@ -10,6 +10,8 @@ import './shopcart.dart';
 import './core/services/cartList.dart' as cartList;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import './core/services/data.dart' as dataLogin;
+import './search.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +44,37 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index;
+      if ((index == 1 && dataLogin.login == false) ||
+          (index == 2 && dataLogin.login == false)) {
+        showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('Anda belum login'),
+            content: const Text('Silahkan login terlebih dahulu!'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'Cancel'),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => {
+                  Navigator.pop(context, 'Cancel'),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return login();
+                      },
+                    ),
+                  ),
+                },
+                child: const Text('Login'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        _selectedIndex = index;
+      }
     });
   }
 
@@ -74,42 +106,105 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Container(
-                width: 200.0,
-                child: TextField(
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.search),
-                    filled: true,
-                    fillColor: Color.fromARGB(242, 255, 255, 255),
-                    focusColor: Color(0xFF0E5E6F),
-                    labelText: 'Cari barang',
+                width: 180.0,
+                child: SizedBox(
+                  height: 40.0, // Tentukan tinggi yang diinginkan
+                  child: TextField(
+                    readOnly: true,
+                    onTap: () {
+                      //Your code here
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => SearchPage(),
+                        ),
+                      );
+                    },
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.search, color: Colors.white),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      labelText: 'Cari barang',
+                      labelStyle: TextStyle(color: Colors.white),
+                      contentPadding: EdgeInsets.symmetric(
+                          vertical: 5.0), // Ubah padding vertikal
+                    ),
                   ),
                 ),
               ),
               RawMaterialButton(
-                onPressed: () => showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) => AlertDialog(
-                    title: const Text('Anda belum login'),
-                    content: const Text('Silahkan login terlebih dahulu!'),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, 'Cancel'),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return Login();
-                            },
-                          ),
+                onPressed: () => {
+                  if (dataLogin.login == false)
+                    {
+                      showDialog<String>(
+                        context: context,
+                        builder: (BuildContext context) => AlertDialog(
+                          title: const Text('Anda belum login'),
+                          content:
+                              const Text('Silahkan login terlebih dahulu!'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'Cancel'),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => {
+                                Navigator.pop(context, 'Cancel'),
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      return login();
+                                    },
+                                  ),
+                                ),
+                              },
+                              child: const Text('Login'),
+                            ),
+                          ],
                         ),
-                        child: const Text('Login'),
                       ),
-                    ],
-                  ),
-                ),
-                fillColor: Color(0xFF19A7CE),
+                    }
+                  else
+                    {
+                      showDialog<String>(
+                        context: context,
+                        builder: (BuildContext context) => AlertDialog(
+                          title: const Text('Anda sudah login'),
+                          content: const Text('Apakah anda mau log out'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'Cancel'),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => {
+                                Navigator.pop(context, 'Cancel'),
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      dataLogin.login = false;
+                                      dataLogin.email = "";
+                                      return MyApp();
+                                    },
+                                  ),
+                                ),
+                              },
+                              child: const Text('Log out'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    }
+                },
+                fillColor:
+                    dataLogin.login == true ? Color(0xFF19A7CE) : Colors.grey,
                 child: Icon(
                   Icons.person,
                   size: 20.0,
@@ -123,19 +218,48 @@ class _MyHomePageState extends State<MyHomePage> {
       body: screen[_selectedIndex],
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) {
-                cartList.hargaAwal = 0;
-                for (var i = 0; i < cartList.cart.length; i++) {
-                  cartList.hargaAwal +=
-                      (cartList.cart[i]['harga'] * cartList.cart[i]['qty']);
-                  cartList.qty = cartList.cart.length;
-                }
-                return shopcart();
-              },
-            ),
-          );
+          if (dataLogin.login == false) {
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('Anda belum login'),
+                content: const Text('Silahkan login terlebih dahulu!'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'Cancel'),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => {
+                      Navigator.pop(context, 'Cancel'),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return login();
+                          },
+                        ),
+                      ),
+                    },
+                    child: const Text('Login'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) {
+                  // cartList.hargaAwal = 0;
+                  // for (var i = 0; i < cartList.cart.length; i++) {
+                  //   cartList.hargaAwal +=
+                  //       (cartList.cart[i]['harga'] * cartList.cart[i]['qty']);
+                  //   cartList.qty = cartList.cart.length;
+                  // }
+                  return shopcart();
+                },
+              ),
+            );
+          }
         },
         backgroundColor: Color(0xFF146C94),
         child: const Icon(Icons.shopping_cart),
@@ -154,7 +278,7 @@ class _MyHomePageState extends State<MyHomePage> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_box_rounded),
+            icon: Icon(Icons.favorite),
             label: 'Wishlist',
           ),
           BottomNavigationBarItem(

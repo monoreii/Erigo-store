@@ -1,10 +1,35 @@
 import 'package:flutter/material.dart';
 import './main.dart';
 import './register.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import './core/services/data.dart' as dataLogin;
 
-class Login extends StatelessWidget {
-  const Login({super.key});
+void main() async {
+  runApp(const lg());
+}
 
+class lg extends StatelessWidget {
+  const lg({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'login',
+      home: login(),
+    );
+  }
+}
+
+class login extends StatefulWidget {
+  login({Key? key}) : super(key: key);
+  @override
+  State<login> createState() => _loginState();
+}
+
+class _loginState extends State<login> {
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,6 +68,7 @@ class Login extends StatelessWidget {
               //padding: const EdgeInsets.only(left:15.0,right: 15.0,top:0,bottom: 0),
               padding: EdgeInsets.symmetric(horizontal: 15),
               child: TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(
@@ -58,6 +84,7 @@ class Login extends StatelessWidget {
                   left: 15.0, right: 15.0, top: 15, bottom: 0),
               //padding: EdgeInsets.symmetric(horizontal: 15),
               child: TextField(
+                controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                     border: OutlineInputBorder(),
@@ -69,17 +96,20 @@ class Login extends StatelessWidget {
                     hintText: 'Enter secure password'),
               ),
             ),
-            TextButton(
-              onPressed: () {
-                //TODO FORGOT PASSWORD SCREEN GOES HERE
-              },
-              style: TextButton.styleFrom(
-                primary: Colors.blue,
-                textStyle: TextStyle(fontSize: 15),
-              ),
-              child: Text(
-                'Forgot Password',
-              ),
+            // TextButton(
+            //   onPressed: () {
+            //     //TODO FORGOT PASSWORD SCREEN GOES HERE
+            //   },
+            //   style: TextButton.styleFrom(
+            //     primary: Colors.blue,
+            //     textStyle: TextStyle(fontSize: 15),
+            //   ),
+            //   child: Text(
+            //     'Forgot Password',
+            //   ),
+            // ),
+            SizedBox(
+              height: 20,
             ),
             Container(
               height: 50,
@@ -88,13 +118,48 @@ class Login extends StatelessWidget {
                   color: Colors.blue, borderRadius: BorderRadius.circular(20)),
               child: TextButton(
                 onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return MyApp();
-                      },
-                    ),
-                  );
+                  bool emailnotFound = true;
+                  FirebaseFirestore.instance
+                      .collection('akun')
+                      .where("email", isEqualTo: _emailController.text)
+                      .limit(1)
+                      .get()
+                      .then((QuerySnapshot querySnapshot) {
+                    querySnapshot.docs.forEach((doc) {
+                      if (doc.get('email') != _emailController.text) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Email tidak ditemukan')));
+                      } else {
+                        //jika email benar
+                        if (doc.get('password') != _passwordController.text) {
+                          emailnotFound = false;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Password salah')));
+                        } else {
+                          //jika 2 2 nya benar
+                          emailnotFound = false;
+                          dataLogin.login = true;
+                          dataLogin.email = _emailController.text;
+                          _emailController.text = '';
+                          _passwordController.text = '';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Login berhasil')));
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return MyApp();
+                              },
+                            ),
+                          );
+                        }
+                      }
+                    });
+                    if (emailnotFound == true) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Email tidak ditemukan')));
+                    }
+                  });
                 },
                 child: Text(
                   'Login',

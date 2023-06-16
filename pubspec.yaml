@@ -36,6 +36,14 @@ dependencies:
   flutter_svg: ^2.0.5
   cloud_firestore: ^4.7.1
   firebase_core: ^2.13.0
+  sqflite: ^2.2.8+2
+  camera: ^0.10.5+2
+  qr_code_scanner: ^1.0.1
+  flutter_map: ^0.13.1
+  geocode: ^1.0.3
+  geolocator: ^9.0.2
+  shared_preferences: ^2.1.2
+  # open_street_map_search_and_pick: ^0.0.4
 
 dev_dependencies:
   flutter_test:
